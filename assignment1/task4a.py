@@ -12,22 +12,23 @@ def cross_entropy_loss(targets: np.ndarray, outputs: np.ndarray):
     Returns:
         Cross entropy error (float)
     """
+    
     assert targets.shape == outputs.shape,\
         f"Targets shape: {targets.shape}, outputs: {outputs.shape}"
     ce = targets * np.log(outputs)
-    raise NotImplementedError
+    return -1*np.sum(ce)/targets.size
 
 
 class SoftmaxModel:
 
     def __init__(self, l2_reg_lambda: float):
         # Define number of input nodes
-        self.I = None
+        self.I = 785
 
         # Define number of output nodes
-        self.num_outputs = None
+        self.num_outputs = 10
         self.w = np.zeros((self.I, self.num_outputs))
-        self.grad = None
+        self.grad = np.zeros(self.w.shape)
 
         self.l2_reg_lambda = l2_reg_lambda
 
@@ -38,7 +39,11 @@ class SoftmaxModel:
         Returns:
             y: output of model with shape [batch size, num_outputs]
         """
-        return None
+        Y=[]
+        z=np.dot(X,self.w)
+        y=np.exp(z)
+        y=y/np.sum(y,axis=1,keepdims=True)
+        return y
 
     def backward(self, X: np.ndarray, outputs: np.ndarray, targets: np.ndarray) -> None:
         """
@@ -50,8 +55,11 @@ class SoftmaxModel:
         assert targets.shape == outputs.shape,\
             f"Output shape: {outputs.shape}, targets: {targets.shape}"
         self.grad = np.zeros_like(self.w)
+        self.grad = -1*np.dot(X.transpose(),(targets-outputs))/outputs.size+2.0*self.l2_reg_lambda*self.w
         assert self.grad.shape == self.w.shape,\
              f"Grad shape: {self.grad.shape}, w: {self.w.shape}"
+        return self.grad
+
 
     def zero_grad(self) -> None:
         self.grad = None
@@ -65,7 +73,11 @@ def one_hot_encode(Y: np.ndarray, num_classes: int):
     Returns:
         Y: shape [Num examples, num classes]
     """
-    raise NotImplementedError
+    one_hot=np.zeros((Y.shape[0],num_classes))
+    for i in range(Y.shape[0]):
+        one_hot[i,Y[i]]=1
+    return one_hot
+    
 
 
 def gradient_approximation_test(model: SoftmaxModel, X: np.ndarray, Y: np.ndarray):
