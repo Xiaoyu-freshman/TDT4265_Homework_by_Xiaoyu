@@ -48,11 +48,10 @@ def train(
             end = start + batch_size
             X_batch, Y_batch = X_train[start:end], Y_train[start:end]
 
-            #Xiaoyu
-            output=model.forward(X_batch) #正向
-            model.backward(X_batch,output,Y_batch)#反向得梯度
-            model.w=model.w-learning_rate*model.grad
-            #xiaoyu
+            #core-code of training
+            output=model.forward(X_batch)            #forward
+            model.backward(X_batch,output,Y_batch)   #backward and gain the gradient
+            model.w=model.w-learning_rate*model.grad #update the gradient
             
             # Track training loss continuously
             _train_loss = cross_entropy_loss(Y_batch,output)
