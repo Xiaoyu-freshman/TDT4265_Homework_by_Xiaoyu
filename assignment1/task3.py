@@ -13,7 +13,7 @@ def calculate_accuracy(X: np.ndarray, targets: np.ndarray, model: BinaryModel) -
     Returns:
         Accuracy (float)
     """
-    # Task 2c
+    # calculating the accuracy
     output=model.forward(X)
     mark=abs(output-targets)<=0.5
     count=np.zeros(output.shape)
@@ -34,13 +34,6 @@ def train(
     """
     global X_train, X_val, X_test
     
-#     #Xiaoyu
-#     X_train=pre_process_images(X_train)
-#     X_val=pre_process_images(X_val)
-#     #print('X_val',X_val.shape)
-#     X_test=pre_process_images(X_test)
-#     #Xiaoyu
-    
     # Utility variables
     num_batches_per_epoch = X_train.shape[0] // batch_size
     num_steps_per_val = num_batches_per_epoch // 5
@@ -56,7 +49,6 @@ def train(
     
     global_step = 0
     for epoch in range(num_epochs):
-        #count_loss_increase=0
         
         for step in range(num_batches_per_epoch):
             # Select our mini-batch of images / labels
@@ -64,10 +56,10 @@ def train(
             end = start + batch_size
             X_batch, Y_batch = X_train[start:end], Y_train[start:end]
             
-            #Xiaoyu
-            output=model.forward(X_batch) #正向
-            model.backward(X_batch,output,Y_batch)#反向得梯度
-            model.w=model.w-learning_rate*model.grad
+            #core-code of training
+            output=model.forward(X_batch)             #forward
+            model.backward(X_batch,output,Y_batch)    #backward and gain the gradient
+            model.w=model.w-learning_rate*model.grad  #update the gradient
             #xiaoyu
 
             # Track training loss continuously
@@ -83,26 +75,17 @@ def train(
                 val_accuracy[global_step] = calculate_accuracy(
                     X_val, Y_val, model)            
             global_step += 1
-#         #----early stopping by Xiaoyu---------------------------------------- 
-#         val_loss_earl_stop=list(val_loss.values())[-25::5] #after passing rhough 20% and the loss needs to increase continously 4times 
-#         val_loss_earl_stop=np.array(val_loss_earl_stop)
-#         count=np.ones(len(val_loss_earl_stop)-1)
-#         count[[val_loss_earl_stop[i] > val_loss_earl_stop[i+1] for i in range(len(val_loss_earl_stop)-1)]]=0
-#         if  sum(count)>3 and global_step>1000:
-#             print('Early Stopping when epoch=',global_step/num_batches_per_epoch)
-#             break
-#         #-------------------------------------------------------------------    
+            #In this task, we do not need the early-stopping.
     return model, train_loss, val_loss, train_accuracy, val_accuracy
 # Load dataset
 category1, category2 = 2, 3
 validation_percentage = 0.1
 X_train, Y_train, X_val, Y_val, X_test, Y_test = utils.load_binary_dataset(
     category1, category2, validation_percentage)
-#Xiaoyu
+#preprocessing
 X_train=pre_process_images(X_train)
 X_val=pre_process_images(X_val)
 X_test=pre_process_images(X_test)
-#Xiaoyu
     
 # hyperparameters
 num_epochs = 80
@@ -122,7 +105,7 @@ for i in range(len(l2_reg_lambda)):
     batch_size=batch_size,
     l2_reg_lambda=l2_reg_lambda[i])
     
-# Plot loss
+# Plot Accuracy of different values of lambda
 for i in range(len(l2_reg_lambda)):
     utils.plot_loss(val_accuracy_total[i], "lamba="+str(l2_reg_lambda[i]))
 plt.xlabel('Gradient Step')
@@ -131,6 +114,7 @@ plt.legend()
 plt.savefig("Accuracy_with_different_lamba.png")
 plt.show()
 
+#Plot the L2 Length
 L2_length=np.zeros(l2_reg_lambda.shape)
 for i in range(len(l2_reg_lambda)):
     L2_length[i]=np.dot(model[i].w.transpose(),model[i].w)
@@ -141,6 +125,8 @@ plt.ylabel('L2 Norm')
 plt.title('L2 Norm VS. Lamba')
 plt.savefig('L2_Norm_vs_Lamba.png')
 plt.show()
+
+#Plot the weight of different lambda
 for i in range(len(l2_reg_lambda)):
     plt.imshow((model[i].w[:-1]).reshape(28,28))
     plt.savefig('Weight_lambda_'+str(l2_reg_lambda[i])+'.png')
