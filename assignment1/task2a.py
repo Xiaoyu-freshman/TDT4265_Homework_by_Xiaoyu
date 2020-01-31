@@ -36,9 +36,9 @@ class BinaryModel:
 
     def __init__(self, l2_reg_lambda: float):
         # Define number of input nodes
-        self.I = 784+1#None
+        self.I = 784+1
         self.w = np.zeros((self.I, 1))
-        self.grad = np.zeros((self.I, 1))#None
+        self.grad = np.zeros((self.I, 1))
 
         # Hyperparameter for task 3
         self.l2_reg_lambda = l2_reg_lambda
@@ -50,10 +50,9 @@ class BinaryModel:
         Returns:
             y: output of model with shape [batch size, 1]
         """
-        zs=[];Y=[]
+        Y=[]
         for i in X[:,]:
             z=np.dot(self.w.transpose(),i)
-            zs.append(z)
             y=1.0/(1+np.exp(-z)) # Sigmoid
             Y.append(y)
         Y=np.array(Y)
