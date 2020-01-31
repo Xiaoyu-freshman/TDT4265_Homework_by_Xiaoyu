@@ -36,9 +36,9 @@ class BinaryModel:
 
     def __init__(self, l2_reg_lambda: float):
         # Define number of input nodes
-        self.I = 784+1#None
+        self.I = 784+1
         self.w = np.zeros((self.I, 1))
-        self.grad = np.zeros((self.I, 1))#None
+        self.grad = np.zeros((self.I, 1))
 
         # Hyperparameter for task 3
         self.l2_reg_lambda = l2_reg_lambda
@@ -67,7 +67,7 @@ class BinaryModel:
             targets: labels/targets of each image of shape: [batch size, 1]
         """
         
-        self.grad=-1*np.dot(X.transpose(),(targets-outputs))/len(X)+2.0*self.l2_reg_lambda*self.w
+        self.grad=-1*np.dot(X.transpose(),(targets-outputs))/len(X)+2.0*self.l2_reg_lambda*self.w #Regularization
         return self.grad
         
         
