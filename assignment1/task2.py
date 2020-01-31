@@ -34,12 +34,11 @@ def train(
     """
     global X_train, X_val, X_test
     
-    #Xiaoyu
+    #preprocessing
     X_train=pre_process_images(X_train)
     X_val=pre_process_images(X_val)
     #print('X_val',X_val.shape)
     X_test=pre_process_images(X_test)
-    #Xiaoyu
     
     # Utility variables
     num_batches_per_epoch = X_train.shape[0] // batch_size
@@ -64,11 +63,10 @@ def train(
             end = start + batch_size
             X_batch, Y_batch = X_train[start:end], Y_train[start:end]
             
-            #Xiaoyu
-            output=model.forward(X_batch) #正向
-            model.backward(X_batch,output,Y_batch)#反向得梯度
-            model.w=model.w-learning_rate*model.grad
-            #xiaoyu
+            #core-code of training
+            output=model.forward(X_batch) #forward
+            model.backward(X_batch,output,Y_batch)#backward and gain the gradient
+            model.w=model.w-learning_rate*model.grad #update the gradient
 
             # Track training loss continuously
             _train_loss = cross_entropy_loss(Y_batch,output)
@@ -83,7 +81,8 @@ def train(
                 val_accuracy[global_step] = calculate_accuracy(
                     X_val, Y_val, model)            
             global_step += 1
-        #----early stopping by Xiaoyu---------------------------------------- 
+        #early stopping 
+        #Xiaoyu: I have combined some sub-tasks of the task2 into this whole filed, If you want to test them, please firstly    comment this codes to aviod early-stopping
         val_loss_earl_stop=list(val_loss.values())[-25::5] #after passing rhough 20% and the loss needs to increase continously 4times 
         val_loss_earl_stop=np.array(val_loss_earl_stop)
         count=np.ones(len(val_loss_earl_stop)-1)
