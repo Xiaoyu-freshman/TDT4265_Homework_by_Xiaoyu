@@ -64,8 +64,8 @@ def train(
             X_batch, Y_batch = X_train[start:end], Y_train[start:end]
             
             #core-code of training
-            output=model.forward(X_batch) #forward
-            model.backward(X_batch,output,Y_batch)#backward and gain the gradient
+            output=model.forward(X_batch)            #forward
+            model.backward(X_batch,output,Y_batch)   #backward and gain the gradient
             model.w=model.w-learning_rate*model.grad #update the gradient
 
             # Track training loss continuously
@@ -82,7 +82,8 @@ def train(
                     X_val, Y_val, model)            
             global_step += 1
         #early stopping 
-        #Xiaoyu: I have combined some sub-tasks of the task2 into this whole filed, If you want to test them, please firstly    comment this codes to aviod early-stopping
+        #Xiaoyu: I have combined some sub-tasks of the task2 into this whole filed, If you want to test them, 
+        #please firstly comment this codes to aviod early-stopping
         val_loss_earl_stop=list(val_loss.values())[-25::5] #after passing rhough 20% and the loss needs to increase continously 4times 
         val_loss_earl_stop=np.array(val_loss_earl_stop)
         count=np.ones(len(val_loss_earl_stop)-1)
