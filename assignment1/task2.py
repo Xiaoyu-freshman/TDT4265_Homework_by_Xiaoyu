@@ -99,7 +99,7 @@ validation_percentage = 0.1
 X_train, Y_train, X_val, Y_val, X_test, Y_test = utils.load_binary_dataset(
     category1, category2, validation_percentage)
 # hyperparameters
-num_epochs = 500
+num_epochs = 500 #50
 learning_rate = 0.2
 batch_size = 128
 l2_reg_lambda = 0
@@ -127,7 +127,7 @@ utils.plot_loss(val_loss, "Validation Loss")
 plt.xlabel('Gradient Step')
 plt.ylabel('Loss')
 plt.legend()
-plt.savefig("binary_train_loss_ep500.png")
+plt.savefig("binary_train_loss_earlystop.png") #When changing the epochs, please change this file name.
 plt.show()
 
 
@@ -136,8 +136,8 @@ plt.ylim([0.93, .99])
 utils.plot_loss(train_accuracy, "Training Accuracy")
 utils.plot_loss(val_accuracy, "Validation Accuracy")
 plt.xlabel('Gradient Step')
-plt.ylabel('Loss')
+plt.ylabel('Accuracy')
 plt.legend()
-plt.savefig("binary_train_accuracy_ep500.png")
+plt.savefig("binary_train_accuracy_earlystop.png")
 plt.show()
 
