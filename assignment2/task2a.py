@@ -160,7 +160,6 @@ def gradient_approximation_test(
     """
     epsilon = 1e-3
     for layer_idx, w in enumerate(model.ws): 
-        print('layer_idx',layer_idx)
         for i in range(w.shape[0]):
             for j in range(w.shape[1]):
                 orig = model.ws[layer_idx][i, j].copy()
