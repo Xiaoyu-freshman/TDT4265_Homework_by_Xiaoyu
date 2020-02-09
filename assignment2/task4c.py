@@ -1,6 +1,6 @@
 import numpy as np
 import utils
-from task2a import one_hot_encode, pre_process_images, SoftmaxModel, gradient_approximation_test
+from task3a import one_hot_encode, pre_process_images, SoftmaxModel, gradient_approximation_test
 
 
 if __name__ == "__main__":
