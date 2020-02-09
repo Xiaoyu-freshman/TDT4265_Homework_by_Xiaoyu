@@ -16,7 +16,8 @@ def calculate_accuracy(X: np.ndarray, targets: np.ndarray,
     Returns:
         Accuracy (float)
     """
-    accuracy = 0
+    output=model.forward(X)[0][-1]
+    accuracy=(output.argmax(axis=1) == targets.argmax(axis=1)).mean()
     return accuracy
 
 
@@ -31,6 +32,9 @@ def train(
         use_momentum: bool,
         momentum_gamma: float):
     X_train, Y_train, X_val, Y_val, X_test, Y_test = datasets
+
+    for i in range(len(model.neurons_per_layer)):
+        model.ws[i]=np.random.uniform(-1,1,model.ws[i].shape)
 
     # Utility variables
     num_batches_per_epoch = X_train.shape[0] // batch_size
@@ -47,14 +51,18 @@ def train(
             start = step * batch_size
             end = start + batch_size
             X_batch, Y_batch = X_train[start:end], Y_train[start:end]
-
+            #core-code of training
+            output=model.forward(X_batch)[0][-1]            #forward
+            model.backward(X_batch,output,Y_batch)   #backward and gain the gradient
+            for i in range(len(model.neurons_per_layer)):
+                model.ws[i]=model.ws[i]-learning_rate*model.grads[i] #update the gradient
             # Track train / validation loss / accuracy
             # every time we progress 20% through the dataset
             if (global_step % num_steps_per_val) == 0:
-                _val_loss = 0
+                _val_loss = _val_loss = cross_entropy_loss(Y_val,model.forward(X_val)[0][-1])
                 val_loss[global_step] = _val_loss
 
-                _train_loss = 0
+                _train_loss = cross_entropy_loss(Y_batch,output)
                 train_loss[global_step] = _train_loss
 
                 train_accuracy[global_step] = calculate_accuracy(
@@ -71,7 +79,16 @@ if __name__ == "__main__":
     validation_percentage = 0.2
     X_train, Y_train, X_val, Y_val, X_test, Y_test = utils.load_full_mnist(
         validation_percentage)
-
+    #Preprocessing_by_Xiaoyu
+    X_train=pre_process_images(X_train)
+    X_val=pre_process_images(X_val)
+    X_test=pre_process_images(X_test)
+    print('X_train',X_train.shape,'X_val',X_val.shape,'X_test',X_test.shape)
+    Y_train = one_hot_encode(Y_train, 10)
+    Y_val = one_hot_encode(Y_val, 10)
+    Y_test= one_hot_encode(Y_test,10)
+    
+    
     # Hyperparameters
     num_epochs = 20
     learning_rate = .1
@@ -100,11 +117,11 @@ if __name__ == "__main__":
         momentum_gamma=momentum_gamma)
 
     print("Final Train Cross Entropy Loss:",
-          cross_entropy_loss(Y_train, model.forward(X_train)))
+          cross_entropy_loss(Y_train, model.forward(X_train)[0][-1]))
     print("Final Validation Cross Entropy Loss:",
-          cross_entropy_loss(Y_val, model.forward(X_val)))
+          cross_entropy_loss(Y_val, model.forward(X_val)[0][-1]))
     print("Final Test Cross Entropy Loss:",
-          cross_entropy_loss(Y_test, model.forward(X_test)))
+          cross_entropy_loss(Y_test, model.forward(X_test)[0][-1]))
 
     print("Final Train accuracy:",
           calculate_accuracy(X_train, Y_train, model))
