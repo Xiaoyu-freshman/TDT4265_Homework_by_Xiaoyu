@@ -1,13 +1,14 @@
 import pathlib
 import matplotlib.pyplot as plt
 import torch
+import torch.nn as nn
+import torch.nn.init as init
 import utils
 import time
 import typing
 import collections
 from torch import nn
 from dataloaders import load_cifar10
-
 
 def compute_loss_and_accuracy(
         dataloader: torch.utils.data.DataLoader,
@@ -25,25 +26,45 @@ def compute_loss_and_accuracy(
     """
     average_loss = 0
     accuracy = 0
-
+    running_corrects = 0.0
+    size=0
+    #print('dataloder',len(dataloader)) #len(dataloader) express the total number of minibatch. eg. len=156
+                                       #and batch_size=64, which means that total number of samples in each 
+                                       #epoch is 156*64=9984
     with torch.no_grad():
         for (X_batch, Y_batch) in dataloader:
             # Transfer images/labels to GPU VRAM, if possible
             X_batch = utils.to_cuda(X_batch)
             Y_batch = utils.to_cuda(Y_batch)
+            bs=Y_batch.size(0)
             # Forward pass the images through our model
             output_probs = model(X_batch)
 
             # Compute Loss and Accuracy
-
+            average_loss = loss_criterion(output_probs,Y_batch)
+            _,index = torch.max(output_probs,1) #torch.max returns the maximum value and corresponding index location
+                                                #in each row. Here we just need the index
+            running_corrects += torch.sum(index == Y_batch)
+            size+=bs
+        accuracy=running_corrects.item() / size
     return average_loss, accuracy
 
+def weights_init(m):  #This weight_init is based on several blogs and materials, By Xiaoyu Zhu.
+    if isinstance(m, nn.Conv2d):
+        init.xavier_normal(m.weight.data)
+        init.constant_(m.bias.data, 0.0)
+    elif isinstance(m, nn.Linear):
+        init.xavier_normal_(m.weight.data)
+        init.constant_(m.bias.data, 0.0)
 
 class ExampleModel(nn.Module):
 
     def __init__(self,
-                 image_channels,
+                 image_channels, 
                  num_classes):
+        #image_channels=3
+        #num_classes=10
+        
         """
             Is called when model is initialized.
             Args:
@@ -61,18 +82,46 @@ class ExampleModel(nn.Module):
                 kernel_size=5,
                 stride=1,
                 padding=2
-            )
+            ),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            
+            nn.Conv2d(
+                in_channels= 32,
+                out_channels=64,
+                kernel_size=5,
+                stride=1,
+                padding=2
+            ),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            
+            nn.Conv2d(
+                in_channels=64,
+                out_channels=128,
+                kernel_size=5,
+                stride=1,
+                padding=2
+            ),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
         )
+        
         # The output of feature_extractor will be [batch_size, num_filters, 16, 16]
-        self.num_output_features = 32*32*32
+        self.num_output_features = 128*4*4#32*32*32
         # Initialize our last fully connected layer
         # Inputs all extracted features from the convolutional layers
         # Outputs num_classes predictions, 1 for each class.
         # There is no need for softmax activation function, as this is
         # included with nn.CrossEntropyLoss
         self.classifier = nn.Sequential(
-            nn.Linear(self.num_output_features, num_classes),
+            nn.Linear(in_features=self.num_output_features,out_features=64),
+            nn.ReLU(),
+            nn.Linear(in_features=64, out_features=num_classes),
         )
+        
+
 
     def forward(self, x):
         """
@@ -80,7 +129,9 @@ class ExampleModel(nn.Module):
         Args:
             x: Input image, shape: [batch_size, 3, 32, 32]
         """
-        out = x
+        conv_out=self.feature_extractor(x)
+        res=conv_out.view(conv_out.size(0), -1)
+        out=self.classifier(res)
         expected_shape = (batch_size, self.num_classes)
         assert out.shape == (batch_size, self.num_classes),\
             f"Expected output of forward pass to be: {expected_shape}, but got: {out.shape}"
@@ -266,6 +317,7 @@ if __name__ == "__main__":
     early_stop_count = 4
     dataloaders = load_cifar10(batch_size)
     model = ExampleModel(image_channels=3, num_classes=10)
+    model.apply(weights_init)
     trainer = Trainer(
         batch_size,
         learning_rate,
@@ -276,3 +328,17 @@ if __name__ == "__main__":
     )
     trainer.train()
     create_plots(trainer, "task2")
+    #Output the ACC and Loss
+    dataloader_train, dataloader_val, dataloader_test = dataloaders
+    loss_train_f,acc_train_f=compute_loss_and_accuracy(
+            dataloader_train, model, torch.nn.CrossEntropyLoss())
+    print('Final Loss on Training Dataset=',loss_train_f)
+    print('Final Acc on Training Dataset=',acc_train_f)
+    loss_val_f,acc_val_f=compute_loss_and_accuracy(
+            dataloader_val, model, torch.nn.CrossEntropyLoss())
+    print('Final Loss on Validation Dataset=',loss_val_f)
+    print('Final Acc on Validation Dataset=',acc_val_f)
+    loss_test_f,acc_test_f=compute_loss_and_accuracy(
+            dataloader_test, model, torch.nn.CrossEntropyLoss())
+    print('Final Loss on Test Dataset=',loss_test_f)
+    print('Final Acc on Test Dataset=',acc_test_f)
